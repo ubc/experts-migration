@@ -1,6 +1,4 @@
 <?php
-
-
 function ubc_experts_insert_new_terms ( $terms, $post_id, $taxonomy ) {
 	if ( empty( $terms ) ) {
 		return;
@@ -151,7 +149,7 @@ function process_social_media( $social_media ){
 * <page>
 * : The page of the query we are in.
 *
-* [--page=<page]
+* [--page=<page>]
 * : What page in the query we are processing.
 * ---
 * default: 1
@@ -160,6 +158,7 @@ function process_social_media( $social_media ){
 * ## EXAMPLES
 *
 *     wp bam_ubc_process_experts 3
+*
 */
 function bam_ubc_process_experts( $args, $assoc_args ) {
 
@@ -254,7 +253,6 @@ function bam_ubc_process_experts( $args, $assoc_args ) {
 	
 	$profile_args = array(
 		'post_type'			=> 'profile_cct',
-		// 'post__in' => array(5687,11518, 5873),
 		'posts_per_page'    => 30,
 		'paged' 			=> $paged
 	);
@@ -323,15 +321,16 @@ function bam_ubc_process_experts( $args, $assoc_args ) {
 			}
 			$languages = '';
 			if ( $profile_meta['clone_other_languages'] ) {
-				$languages = '<!-- wp:heading {"level":3} -->
+				$languages_heading = '<!-- wp:heading {"level":3} -->
 				<h3>Languages</h3><!-- /wp:heading -->';
 				foreach( $profile_meta['clone_other_languages'] as $language ){
 					if ( $language['text'] != '') {
 						$languages .= '<!-- wp:paragraph --><p>'.$language['text'].'</p><!-- /wp:paragraph -->';
-
 					}
 				}
-				
+				if ( $languages && $languages != '' ){
+					$languages = $languages_heading . $languages;
+				} 
 				
 			}
 			$news_feed = '';
@@ -392,7 +391,7 @@ function bam_ubc_process_experts( $args, $assoc_args ) {
 			$maybe_update =  get_post_meta( $post_id, 'related_post', true );
 			$id = ( $maybe_update ? $maybe_update : '' );
 
-			$excerpt = "<h3>$positions</h3>$field_links</p>";
+			$excerpt = "<h3>$positions</h3>$expertise</p>";
 			$expert_post = array(
 				'ID'			=> $id,
 				'post_title'	=> $name,
@@ -421,9 +420,9 @@ function bam_ubc_process_experts( $args, $assoc_args ) {
 	}
 	
 	$paged++;
-
+	$subsite = $args[1];
 	if ( $paged <= $profiles->max_num_pages ) {
-		WP_CLI::runcommand( 'bam_ubc_process_experts ' . $paged . ' --url=experts.local/experts' , array( 'launch' => true ) );
+		WP_CLI::runcommand( 'bam_ubc_process_experts ' . $paged . ' ' , array( 'launch' => true ) );
 	}
 }
 WP_CLI::add_command( 'bam_ubc_process_experts', 'bam_ubc_process_experts' );
