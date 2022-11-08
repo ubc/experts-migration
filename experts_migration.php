@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: UBC Experts Migration commands
+Plugin Name: UBC Experts Migration
 Author: Flynn O'Connor
-Description: Custom WP CLI commands to migrate experts away from profile plugin.
+Description: Custom WP CLI commands to migrate experts away from profile plugin. Adds custom taxonomy for Expert profiles.
 Version: 0.1
 */
 
