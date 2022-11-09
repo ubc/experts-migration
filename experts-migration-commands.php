@@ -820,22 +820,25 @@ class Bam_Experts_Migration {
 					$get_parent = get_term_by( 'term_id', $field->parent, 'profile_cct_field' );
 					// get parent field
 					$get_parent_field = get_term_by('slug', $get_parent->slug, 'profile_field');
-	
+					if ( is_wp_error( $get_parent ) ) {
+						continue;
+					}
 					// check if parent exists.
 					if ( is_wp_error( $get_parent_field ) || $get_parent_field =='' ) {
-						// insert part term
-						$wp_parent_term = wp_insert_term( $get_parent->name, 'profile_field', array( 'slug' => $get_parent->slug ) );
+						
+						// insert parent term
+						$wp_parent_term = wp_insert_term( $get_parent->name, 'profile_field', array( 'slug' => sanitize_title_with_dashes($get_parent->slug) ) );
 	
 						// check if child term exists.
 						$get_field = get_term_by('slug', $field->slug, 'profile_field');
 						if ( is_wp_error( $get_field ) || $get_field =='' ) {
-							$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => $field->slug, 'parent' => $wp_parent_term->term_id ) );
+							$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => sanitize_title_with_dashes($field->slug), 'parent' => $wp_parent_term->term_id ) );
 						}
 					} else {
 						
 						$get_field = get_term_by('slug', $field->slug, 'profile_field');
 						if ( is_wp_error( $get_field ) || $get_field =='' ) {
-							$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => $field->slug, 'parent' => $get_parent_field->term_id ) );
+							$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => sanitize_title_with_dashes($field->slug), 'parent' => $get_parent_field->term_id ) );
 						}
 					}	
 				}else {
@@ -843,32 +846,36 @@ class Bam_Experts_Migration {
 					$get_field = get_term_by('slug', $field->slug, 'profile_field');
 	
 					if ( is_wp_error( $get_field ) || $get_field == '' ) {
-						$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => $field->slug ) );	
+						$wp_term = wp_insert_term( $field->name, 'profile_field', array( 'slug' => sanitize_title_with_dashes($field->slug) ) );	
 					}	
 				}
 			}	
 		}
 		if ( !empty( $faculties ) ) {
 			$faculties_parent = get_term_by('slug', 'faculties', 'category');
+			if ( !is_wp_error( $faculties_parent ) ) {
+				foreach( $faculties as $faculty ){ 
 	
-			foreach( $faculties as $faculty ){ 
-	
-				if ( !is_wp_error( $faculty ) ) {
-					$wp_term = wp_insert_term( $faculty->name, 'category', array( 'slug' => $faculty->slug, 'parent' => $faculties_parent->term_id ) );	
-	
+					if ( !is_wp_error( $faculty ) ) {
+						$wp_term = wp_insert_term( $faculty->name, 'category', array( 'slug' => $faculty->slug, 'parent' => $faculties_parent->term_id ) );	
+		
+					}	
 				}	
-			}	
+			}
+				
 		}
 	
 		if ( !empty( $campuses ) ) {
 			$campus_parent = get_term_by('slug', 'campuses', 'category');
-	
-			foreach( $campuses as $campus ){ 
-	
-				if ( !is_wp_error( $campus ) ) {
-					$wp_term = wp_insert_term( $campus->name, 'category', array( 'slug' => $campus->slug, 'parent' => $campus_parent->term_id ) );	
+			if ( !is_wp_error( $campus_parent ) ) {
+
+				foreach( $campuses as $campus ){ 
+		
+					if ( !is_wp_error( $campus ) ) {
+						$wp_term = wp_insert_term( $campus->name, 'category', array( 'slug' => $campus->slug, 'parent' => $campus_parent->term_id ) );	
+					}	
 				}	
-			}	
+			}
 		}
 	}
 }
