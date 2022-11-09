@@ -108,15 +108,16 @@ class Bam_Experts_Migration {
 		}
 		foreach( $positions as $position ){		
 			$processed_positions .= $position['position'];
-			if ( array_key_exists( 'position', $position ) && ! is_null( $position['position'] ) ) {
+			if ( array_key_exists( 'position', $position ) && $position['position'] ) {
 				$processed_positions .= ', '.$position['organization'];
 			}
-			if ( array_key_exists( 'url', $position ) && ! is_null( $position['url'] ) ) {
+			if ( array_key_exists( 'url', $position ) && $position['url']  ) {
 				$processed_positions = $this->ubc_experts_process_wrap_link($processed_positions, $position['url']);
 			}	
-			
+
 		}
-		return wp_kses_post($processed_positions); 
+
+		return $processed_positions; 
 	
 	}
 	/**
@@ -573,10 +574,10 @@ class Bam_Experts_Migration {
 		$profiles = new WP_Query($profile_args);
 		if ( $profiles->have_posts() ) {
 	
-			// wp_block
 			while( $profiles->have_posts() ){
 				$profiles->the_post();
 				$post_id = absint( get_the_ID() );
+
 				if ( $post_id == 0 ) {
 					continue;
 				}
@@ -596,14 +597,14 @@ class Bam_Experts_Migration {
 				$profile_pic = get_post_meta($post_id, '_thumbnail_id', true);
 				$profile_pic_url = wp_get_attachment_image_url($profile_pic, 'full');
 				
-				if ( !array_key_exists('name', $profile_meta) && emtpy( $profile_meta['name'] ) ) {
+				if ( !array_key_exists('name', $profile_meta) && emtpy( $profile_meta['name'] ) ) {	
 					// if there is no name we move to the next expert.
 					continue;
 				}
 				$name_keys = array('salutations','first','middle','last','credentials' );
 				$name = $this->ubc_experts_process_array_keys($profile_meta['name'], $name_keys, '', ' ');
 				
-				
+				$positions = '';
 				if ( array_key_exists('position', $profile_meta) && $profile_meta['position'] ) {
 					$positions = $this->ubc_experts_profile_processing_position($profile_meta['position']);
 				}
@@ -759,7 +760,8 @@ class Bam_Experts_Migration {
 				);
 	
 				$maybe_update =  get_post_meta( $post_id, 'related_post', true );
-				$id = ( $maybe_update ? $maybe_update : '' );
+				//check if post exists
+				$id = ( FALSE === get_post_status( $maybe_update ) ? '' : $maybe_update );
 	
 				$excerpt = "<h3>".wp_kses_post($positions)."</h3>".wp_kses_post($expertise)."</p>";
 				$expert_post = array(
@@ -770,7 +772,9 @@ class Bam_Experts_Migration {
 					'post_excerpt'		=> $excerpt
 	
 				);
+
 				$new_post_id = wp_insert_post( $expert_post, false );
+
 				if ( is_wp_error( $new_post_id ) ||  $new_post_id == 0  ) {
 					continue;
 				}
