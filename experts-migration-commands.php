@@ -65,7 +65,7 @@ class Bam_Experts_Migration {
 				continue;
 			}
 
-			$processed_terms[] = "<a href='".esc_url( $term_link )."'>$term->name</a>";	
+			$processed_terms[] = "<a href='".esc_url( $term_link )."'>".wp_kses_post($term->name)."</a>";	
 		}
 
 		return implode(', ', $processed_terms);
@@ -134,7 +134,7 @@ class Bam_Experts_Migration {
 			return;
 		}
 
-		$processed_string = "<a href='". esc_url($url) ."'>$string</a>";
+		$processed_string = "<a href='". esc_url($url) ."'>".wp_kses_post($string)."</a>";
 		return $processed_string;
 	} 
 
