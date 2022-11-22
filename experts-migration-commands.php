@@ -107,14 +107,14 @@ class Bam_Experts_Migration {
 			return $processed_positions; 
 		}
 		foreach( $positions as $position ){		
-			$processed_positions .= $position['position'];
-			if ( array_key_exists( 'position', $position ) && $position['position'] ) {
+			$processed_positions .= '<!-- wp:heading {"level":3} --><h3>'.$position['position'];
+			if ( array_key_exists( 'organization', $position ) && $position['organization'] != '' ) {
 				$processed_positions .= ', '.$position['organization'];
 			}
 			if ( array_key_exists( 'url', $position ) && $position['url']  ) {
 				$processed_positions = $this->ubc_experts_process_wrap_link($processed_positions, $position['url']);
 			}	
-
+			$processed_positions .= '</h3><!-- /wp:heading -->';
 		}
 
 		return $processed_positions; 
@@ -155,7 +155,7 @@ class Bam_Experts_Migration {
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
-<p>Media Relations Specialist</p>
+<p>Senior Media Relations Strategist</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
@@ -180,7 +180,7 @@ class Bam_Experts_Migration {
 		<!-- /wp:paragraph -->
 		
 		<!-- wp:paragraph -->
-		<p>Assistant Communications Coordinator</p>
+		<p>Media Relations Strategist</p>
 		<!-- /wp:paragraph -->
 		
 		<!-- wp:paragraph -->
@@ -478,9 +478,8 @@ class Bam_Experts_Migration {
 		$gutenberg_template = '<!-- wp:columns -->
 	<div class="wp-block-columns"><!-- wp:column {"width":"33.33%%"} -->
 	<div class="wp-block-column" style="flex-basis:33.33%%">
-	<!-- wp:image {"id":10000,"sizeSlug":"full","linkDestination":"none"} -->
-	<figure class="wp-block-image size-full"><img src="%s" alt="" class="wp-image-10000"/></figure>
-	<!-- /wp:image --></div>
+	%s
+	</div>
 	<!-- /wp:column -->
 	
 	<!-- wp:column {"width":"66.66%%"} -->
@@ -488,9 +487,7 @@ class Bam_Experts_Migration {
 	<h2>%s</h2>
 	<!-- /wp:heading -->
 	
-	<!-- wp:heading {"level":3} -->
-	<h3>%s</h3>
-	<!-- /wp:heading -->
+	%s
 	
 	<!-- wp:heading {"level":4} -->
 	<h4>%s</h4>
@@ -542,6 +539,8 @@ class Bam_Experts_Migration {
 	
 	%s
 	
+	%s
+
 	%s
 	
 	<!-- wp:block {"ref":%d} /-->
@@ -595,15 +594,54 @@ class Bam_Experts_Migration {
 				//meta
 				$profile_meta = get_post_meta($post_id, 'profile_cct', true);
 				$profile_pic = get_post_meta($post_id, '_thumbnail_id', true);
-				$profile_pic_url = wp_get_attachment_image_url($profile_pic, 'full');
+
+				if ( $profile_pic && $profile_pic != '' ) {
+					$profile_pic_url = wp_get_attachment_image_url($profile_pic, 'full');
+
+					$image_container = 	'<!-- wp:image {"id":10000,"sizeSlug":"full","linkDestination":"none"} -->
+				<figure class="wp-block-image size-full"><img src="%s" alt="" class="wp-image-10000"/></figure>
+				<!-- /wp:image -->';
+					$profile_pic_url = sprintf( $image_container, $profile_pic_url );
+
+				} else {
+					// using a default image 
+					$profile_pic_url = '<!-- wp:html --><div class="empty-photo">
+					<img decoding="async" src="https://experts.news.ubc.ca/files/2014/03/ubc_logo.png" alt="UBC Logo">
+					</div><!-- /wp:html -->';
+				}
 				
+
 				if ( !array_key_exists('name', $profile_meta) && emtpy( $profile_meta['name'] ) ) {	
 					// if there is no name we move to the next expert.
 					continue;
 				}
+
 				$name_keys = array('salutations','first','middle','last','credentials' );
-				$name = $this->ubc_experts_process_array_keys($profile_meta['name'], $name_keys, '', ' ');
-				
+				$slug_keys = array( 'first','middle','last' );
+
+				$name = '';
+				$slug = '';
+				$first = true;
+				foreach( $name_keys as $key ){
+					if ( array_key_exists( $key, $profile_meta['name'] ) && $profile_meta['name'][$key] !== "" ) {
+						if ( ( $key == 'salutations' || $key == 'first' ) && $first  ) {
+							$name .= $profile_meta['name'][$key] ;
+							$first = false;
+						} else
+						
+						if ( $key == 'credentials' ) {
+							$name .= ', ' . $profile_meta['name'][$key] ;
+						} else {
+							$name .= ' ' . $profile_meta['name'][$key];
+						}
+
+						if ( in_array( $key, $slug_keys ) ) {
+
+							$slug .= $profile_meta['name'][$key].' ';
+						}
+					}
+				}
+
 				$positions = '';
 				if ( array_key_exists('position', $profile_meta) && $profile_meta['position'] ) {
 					$positions = $this->ubc_experts_profile_processing_position($profile_meta['position']);
@@ -628,7 +666,7 @@ class Bam_Experts_Migration {
 	
 				$pronouns = '';
 				if ( array_key_exists('clone_preferred_name_pronouns_', $profile_meta) && $profile_meta["clone_preferred_name_pronouns_"][0]["text"] != '' ) {
-					$pronouns = '<!-- wp:paragraph --><p>Chosen name and pronouns</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>' . wp_kses_post($profile_meta["clone_preferred_name_pronouns_"][0]["text"]).'</p><!-- /wp:paragraph -->';
+					$pronouns = '<!-- wp:paragraph --><p><strong>Chosen name and pronouns: </strong></p><!-- /wp:paragraph --><!-- wp:paragraph --><p>' . wp_kses_post($profile_meta["clone_preferred_name_pronouns_"][0]["text"]).'</p><!-- /wp:paragraph -->';
 				}
 				
 				$pronunciation = '';
@@ -647,7 +685,9 @@ class Bam_Experts_Migration {
 				if ( array_key_exists('phone', $profile_meta) && !empty($profile_meta["phone"]) ) {
 					foreach( $profile_meta['phone'] as $phone ){
 						if ( $phone["tel-2"] && $phone["tel-3"] ) {
-							$phone_list[] = '<!-- wp:paragraph --><p class="telephone tel">'.$phone["option"].': '.$phone["tel-1"].'-'.$phone["tel-2"].'-'.$phone["tel-3"].' '.$phone["extension"].'</p><!-- /wp:paragraph -->';
+							$phone_label = ( $phone["option"] ? $phone["option"] : 'Tel' ).': ';
+							$phone_ext = ( $phone["extension"] ? 'Ext'.$phone["extension"] : '' );
+							$phone_list[] = '<!-- wp:paragraph --><p class="telephone tel">'.$phone_label.': '.$phone["tel-1"].'-'.$phone["tel-2"].'-'.$phone["tel-3"].' '.$phone_ext.'</p><!-- /wp:paragraph -->';
 		
 						}
 					}
@@ -710,6 +750,14 @@ class Bam_Experts_Migration {
 					<!-- /wp:heading --><!-- wp:html -->'.wp_kses_post($profile_meta['clone_news_feed']['textarea']).'<!-- /wp:html -->';
 					
 				}
+				$supervisor = '';
+				if ( $profile_meta['clone_full_name_as_it_should_appear_in_media'][0]['text'] ) {
+					$supervisor = '<!-- wp:paragraph -->
+					<p><strong>Supervisor</strong></p>
+					<!-- /wp:paragraph --><!-- wp:paragraph --><p>'.$profile_meta['clone_full_name_as_it_should_appear_in_media'][0]['text'].'</p><!-- /wp:paragraph -->';
+					
+				}
+
 				$media_gallery = '';
 				if ( $profile_meta['clone_wordpress_gallery']['textarea'] ) {
 					$media_gallery = '<!-- wp:heading {"level":3} -->
@@ -752,6 +800,7 @@ class Bam_Experts_Migration {
 					implode('', $phone_list),
 					implode('', $website_list),
 					implode('', $social_media_list),
+					$supervisor,
 					$media_contact,
 					$languages,
 					$news_feed,
@@ -764,13 +813,18 @@ class Bam_Experts_Migration {
 				$id = ( FALSE === get_post_status( $maybe_update ) ? '' : $maybe_update );
 	
 				$excerpt = "<h3>".wp_kses_post($positions)."</h3>".wp_kses_post($expertise)."</p>";
+				
+				if ( $slug == "" ) {
+					$slug = $name;
+				}
+
 				$expert_post = array(
 					'ID'			=> $id,
 					'post_title'	=> $name,
 					'post_content'  => $formatted_content,
 					'post_status'   => 'publish',
-					'post_excerpt'		=> $excerpt
-	
+					'post_excerpt'	=> $excerpt,
+					'post_name'		=> $slug
 				);
 
 				$new_post_id = wp_insert_post( $expert_post, false );
@@ -795,6 +849,12 @@ class Bam_Experts_Migration {
 				$this->ubc_experts_insert_new_terms($fields, $new_post_id, 'profile_field');
 				// remove uncategorized
 				wp_remove_object_terms($new_post_id, 1, 'category');
+
+				$expert_parent = get_term_by('slug', 'expert', 'category');
+
+				if ( !is_wp_error( $expert_parent ) ) {
+					$wp_terms = wp_set_object_terms( absint($new_post_id), $expert_parent->term_id, 'category', true );
+				}
 			}
 		}
 		
