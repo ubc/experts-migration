@@ -484,7 +484,7 @@ class Bam_Experts_Migration {
 	
 	<!-- wp:column {"width":"66.66%%"} -->
 	<div class="wp-block-column" style="flex-basis:66.66%%"><!-- wp:heading -->
-	<h2>%s</h2>
+	<h1>%s</h1>
 	<!-- /wp:heading -->
 	
 	%s
@@ -509,14 +509,7 @@ class Bam_Experts_Migration {
 	<p>%s</p>
 	<!-- /wp:paragraph -->
 	
-	<!-- wp:heading {"level":3} -->
-	<h3><br>Expertise</h3>
-	<!-- /wp:heading -->
-	
-	<!-- wp:paragraph -->
-	<p>%s</p>
-	<!-- /wp:paragraph -->
-	
+
 	
 	</div>
 	<!-- /wp:column --></div>
@@ -549,7 +542,13 @@ class Bam_Experts_Migration {
 	
 	<!-- wp:column {"width":"66.66%%"} -->
 	<div class="wp-block-column" style="flex-basis:66.66%%">
-	
+	<!-- wp:heading {"level":3} -->
+	<h3>Expertise</h3>
+	<!-- /wp:heading -->
+	<!-- wp:paragraph -->
+	<p>%s</p>
+	<!-- /wp:paragraph -->
+
 	%s
 	
 	%s 
@@ -687,7 +686,7 @@ class Bam_Experts_Migration {
 						if ( $phone["tel-2"] && $phone["tel-3"] ) {
 							$phone_label = ( $phone["option"] ? $phone["option"] : 'Tel' ).': ';
 							$phone_ext = ( $phone["extension"] ? 'Ext'.$phone["extension"] : '' );
-							$phone_list[] = '<!-- wp:paragraph --><p class="telephone tel">'.$phone_label.': '.$phone["tel-1"].'-'.$phone["tel-2"].'-'.$phone["tel-3"].' '.$phone_ext.'</p><!-- /wp:paragraph -->';
+							$phone_list[] = '<!-- wp:paragraph --><p class="telephone tel">'.$phone_label.' '.$phone["tel-1"].'-'.$phone["tel-2"].'-'.$phone["tel-3"].' '.$phone_ext.'</p><!-- /wp:paragraph -->';
 		
 						}
 					}
@@ -714,7 +713,6 @@ class Bam_Experts_Migration {
 				}
 
 				$media_contact = '';
-
 				if ( $campuses[0]->slug == "okanagan" ) {
 					// Patty Wellborn
 					$media_contact = $this->media_contacts['okanagan'];
@@ -793,7 +791,6 @@ class Bam_Experts_Migration {
 					$department_list, 
 					$campus_links,
 					$field_links,
-					wp_kses_post($expertise),
 					$pronouns,
 					$pronunciation,
 					implode('', $email_list),
@@ -802,6 +799,7 @@ class Bam_Experts_Migration {
 					implode('', $social_media_list),
 					$supervisor,
 					$media_contact,
+					wp_kses_post($expertise),
 					$languages,
 					$news_feed,
 					$media_gallery,
